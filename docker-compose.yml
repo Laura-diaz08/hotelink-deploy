@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+
+  postgres:
+    image: postgres:15
+    container_name: hotelink-postgres
+    environment:
+      POSTGRES_DB: hotelink
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - hotelink-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d hotelink"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./hotelink-backend
+    container_name: hotelink-backend
+    environment:
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - hotelink-network
+
+  frontend:
+    build:
+      context: ./hotelink-frontend
+    container_name: hotelink-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - hotelink-network
+
+volumes:
+  postgres_data:
+
+networks:
+  hotelink-network:
+    driver: bridge

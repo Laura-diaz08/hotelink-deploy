@@ -54,6 +54,17 @@ else
     cd hotelink-frontend && git pull && cd ..
 fi
 
+# Descargar backup si no existe
+if [ ! -f "hotelink_backup.sql" ]; then
+    echo "Descargando datos..."
+    git clone https://github.com/Laura-diaz08/hotelink-data.git
+    cp hotelink-data/hotelink_backup.sql .
+    rm -rf hotelink-data
+    echo "Datos descargados."
+else
+    echo "Backup ya existe."
+fi
+
 # Levantar todo
 echo "Levantando Hotelink..."
 sudo docker compose up --build -d
@@ -62,17 +73,15 @@ sudo docker compose up --build -d
 echo "Esperando a que la base de datos esté lista..."
 sleep 15
 
-# Importar datos si existe el backup
-if [ -f "hotelink_backup.sql" ]; then
-    echo "Importando datos..."
-    sudo docker exec -i hotelink-postgres psql -U hotelink_user -d hotelink -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
-    sudo docker cp hotelink_backup.sql hotelink-postgres:/tmp/
-    sudo docker exec -i hotelink-postgres psql -U hotelink_user -d hotelink -f /tmp/hotelink_backup.sql
-    sudo docker restart hotelink-backend
-    echo "Datos importados."
-else
-    echo "No se encontró hotelink_backup.sql, saltando importación."
-fi
+# Importar datos
+echo "Importando datos..."
+sudo docker exec -i hotelink-postgres psql -U hotelink_user -d hotelink -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+sudo docker cp hotelink_backup.sql hotelink-postgres:/tmp/
+sudo docker exec -i hotelink-postgres psql -U hotelink_user -d hotelink -f /tmp/hotelink_backup.sql
+sudo docker restart hotelink-backend
+
+echo "Esperando a que el backend arranque..."
+sleep 15
 
 echo "=============================="
 echo "  HOTELINK LISTO!"

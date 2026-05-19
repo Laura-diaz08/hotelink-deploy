@@ -52,17 +52,8 @@ fi
 echo "Levantando Hotelink..."
 sudo docker compose up --build -d
 
-echo "Esperando a que la base de datos esté lista..."
-sleep 15
-
-echo "Importando datos..."
-sudo docker exec -i hotelink-postgres psql -U hotelink_user -d hotelink -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
-sudo docker cp hotelink-data/hotelink_backup.sql hotelink-postgres:/tmp/
-sudo docker exec -i hotelink-postgres psql -U hotelink_user -d hotelink -f /tmp/hotelink_backup.sql
-sudo docker restart hotelink-backend
-
 echo "Esperando a que el backend arranque..."
-sleep 15
+sleep 20
 
 echo "=============================="
 echo "  HOTELINK LISTO!"
